@@ -1,6 +1,8 @@
+// login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'home.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -10,10 +12,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  /// Handles user login with email and password
+  // Handles user login with email and password
   Future<void> _signInWithEmail() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -35,7 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Welcome, ${userCredential.user!.email}!')),
         );
-        // Navigate to another screen if needed
+        // Navigate to HomeScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -44,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// Handles Google Sign-In
+  // Handles Google Sign-In
   Future<void> _signInWithGoogle() async {
     try {
       // Start the Google Sign-In flow
@@ -70,7 +75,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Welcome, ${userCredential.user!.displayName}!')),
         );
-        // Navigate to another screen if needed
+        // Navigate to HomeScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

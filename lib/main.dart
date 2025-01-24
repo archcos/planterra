@@ -37,6 +37,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Supabase Login Example',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: LoginScreen(), // Route to the LoginScreen
