@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  /// Handles user login
-  Future<void> _signIn() async {
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  /// Handles user login with email and password
+  Future<void> _signInWithEmail() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -23,20 +26,55 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      if (response.user != null) {
+      if (userCredential.user != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Welcome, ${response.user!.email}!')),
+          SnackBar(content: Text('Welcome, ${userCredential.user!.email}!')),
         );
-        // Navigate to another screens if needed
+        // Navigate to another screen if needed
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: ${e.toString()}')),
+      );
+    }
+  }
+
+  /// Handles Google Sign-In
+  Future<void> _signInWithGoogle() async {
+    try {
+      // Start the Google Sign-In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // The user canceled the sign-in
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential for Firebase using the Google credentials
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in with Firebase using the Google credentials
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+      if (userCredential.user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Welcome, ${userCredential.user!.displayName}!')),
+        );
+        // Navigate to another screen if needed
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google Sign-In failed: ${e.toString()}')),
       );
     }
   }
@@ -69,8 +107,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _signIn,
-              child: Text('Login'),
+              onPressed: _signInWithEmail,
+              child: Text('Login with Email'),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _signInWithGoogle,
+              child: Text('Login with Google'),
             ),
           ],
         ),
