@@ -1,8 +1,8 @@
-// login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'home.dart';
+import 'dashboard.dart'; // Ensure this is the correct screen after login
+import 'login.dart'; // For LoginScreen navigation
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to HomeScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => DashboardScreen()),
         );
       }
     } catch (e) {
@@ -52,7 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
   // Handles Google Sign-In
   Future<void> _signInWithGoogle() async {
     try {
-      // Start the Google Sign-In flow
+      // Always prompt for account selection
+      await _googleSignIn.signOut(); // Ensure a fresh login by logging out any existing session
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -78,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to HomeScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => DashboardScreen()),
         );
       }
     } catch (e) {
@@ -91,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: AppBar(title: const Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -99,30 +100,30 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _signInWithEmail,
-              child: Text('Login with Email'),
+              child: const Text('Login with Email'),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _signInWithGoogle,
-              child: Text('Login with Google'),
+              child: const Text('Login with Google'),
             ),
           ],
         ),

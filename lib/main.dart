@@ -8,27 +8,62 @@ import 'screens/login.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  try {
+    // Load environment variables
+    await dotenv.load(fileName: ".env");
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // Initialize with options from firebase_options.dart
-  );
-  // Get Supabase credentials from the .env file
-  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+    // Initialize Firebase
+    print("Initializing Firebase...");
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
-    throw Exception('Missing Supabase credentials in .env file.');
+    // Check if Firebase is initialized
+    if (Firebase.apps.isNotEmpty) {
+      print("Firebase initialized successfully.");
+    } else {
+      throw Exception('Firebase failed to initialize.');
+    }
+
+    // Get Supabase credentials from the .env file
+    final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
+    final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+
+    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+      throw Exception('Missing Supabase credentials in .env file.');
+    }
+
+    // Initialize Supabase
+    print("Initializing Supabase...");
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+    );
+
+    // Check if Supabase is initialized by verifying the client is available
+    final supabaseClient = Supabase.instance.client;
+    if (supabaseClient != null) {
+      print("Supabase initialized successfully.");
+    } else {
+      throw Exception('Supabase failed to initialize.');
+    }
+
+    // Once everything is initialized, start the app
+    runApp(const MyApp());
+  } catch (e) {
+    // Catch any initialization error
+    print("Error during initialization: $e");
+
+    // Show an error message in case of failure
+    runApp(MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Initialization Error')),
+        body: Center(
+          child: Text('Initialization Error: $e'),
+        ),
+      ),
+    ));
   }
-
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseAnonKey,
-  );
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
