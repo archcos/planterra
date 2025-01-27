@@ -44,7 +44,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
       body: FutureBuilder(
         future: _loadScreen(_selectedIndex),
         builder: (context, snapshot) {

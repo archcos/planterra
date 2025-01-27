@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
+import 'screens/dashboard.dart';
 import 'screens/login.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,19 +15,11 @@ Future<void> main() async {
     await dotenv.load(fileName: ".env");
 
     // Initialize Firebase
-    print("Initializing Firebase...");
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Check if Firebase is initialized
-    if (Firebase.apps.isNotEmpty) {
-      print("Firebase initialized successfully.");
-    } else {
-      throw Exception('Firebase failed to initialize.');
-    }
-
-    // Get Supabase credentials from the .env file
+    // Initialize Supabase
     final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
     final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
@@ -33,28 +27,21 @@ Future<void> main() async {
       throw Exception('Missing Supabase credentials in .env file.');
     }
 
-    // Initialize Supabase
-    print("Initializing Supabase...");
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
 
-    // Check if Supabase is initialized by verifying the client is available
+    // Check if Firebase or Supabase is initialized
     final supabaseClient = Supabase.instance.client;
-    if (supabaseClient != null) {
-      print("Supabase initialized successfully.");
-    } else {
+    if (supabaseClient == null) {
       throw Exception('Supabase failed to initialize.');
     }
 
-    // Once everything is initialized, start the app
-    runApp(const MyApp());
+    // Check if a user is already signed in with Firebase
+    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+    runApp(MyApp(user: user)); // Pass the user to MyApp
   } catch (e) {
-    // Catch any initialization error
-    print("Error during initialization: $e");
-
-    // Show an error message in case of failure
     runApp(MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text('Initialization Error')),
@@ -67,7 +54,9 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final firebase_auth.User? user;
+
+  const MyApp({Key? key, this.user}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +64,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Supabase Login Example',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: LoginScreen(), // Route to the LoginScreen
+      home: user == null ? LoginScreen() : DashboardScreen(), // Conditional navigation
     );
   }
 }
