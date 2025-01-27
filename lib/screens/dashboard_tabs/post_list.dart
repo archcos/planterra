@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:flutter/services.dart';
+import 'package:image_downloader/image_downloader.dart';  // For image downloading
 
 class PostsList extends StatelessWidget {
   String? _getUserEmail() {
@@ -263,6 +266,7 @@ class PostsList extends StatelessWidget {
         final posts = snapshot.data!.docs;
 
         return ListView.builder(
+          key: const PageStorageKey('posts_list'), // Key to preserve the state
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: posts.length,
@@ -282,11 +286,21 @@ class PostsList extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (imageUrl.isNotEmpty)
-                      Image.network(
-                        imageUrl,
-                        height: 150,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FullImageScreen(imageUrl: imageUrl),
+                            ),
+                          );
+                        },
+                        child: Image.network(
+                          imageUrl,
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     const SizedBox(height: 8),
                     Text(content, style: const TextStyle(fontSize: 16)),
@@ -413,6 +427,59 @@ class PostsList extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+
+class FullImageScreen extends StatelessWidget {
+  final String imageUrl;
+
+  FullImageScreen({required this.imageUrl});
+
+  Future<void> _downloadImage() async {
+    // Request storage permission
+    final status = await Permission.storage.request();
+
+    if (status.isGranted) {
+      try {
+        var imageId = await ImageDownloader.downloadImage(imageUrl);
+        if (imageId == null) return;
+
+        var fileName = await ImageDownloader.findName(imageId);
+        var path = await ImageDownloader.findPath(imageId);
+        print("Image saved to $path");
+      } catch (error) {
+        print("Error downloading image: $error");
+      }
+    } else {
+      print('Storage permission not granted');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false, // Prevents the default back arrow
+        leading: IconButton(
+          icon: const Icon(Icons.close), // X button
+          onPressed: () {
+            Navigator.pop(context); // Close and go back
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download), // Download button
+            onPressed: _downloadImage,
+          ),
+        ],
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.network(imageUrl),
+        ),
+      ),
     );
   }
 }

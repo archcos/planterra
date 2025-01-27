@@ -14,13 +14,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // This will store the screens lazily.
   final Map<int, Widget> _screens = {};
 
-  Future<Widget> _loadScreen(int index) async {
+  // Function to load the screen lazily
+  Widget _loadScreen(int index) {
     if (_screens.containsKey(index)) {
-      // If the screen is already loaded, return it.
       return _screens[index]!;
     }
 
-    // Lazy load the screen based on index.
     switch (index) {
       case 0:
         _screens[index] = SellingScreen();
@@ -32,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _screens[index] = ProfileScreen();
         break;
     }
+
     return _screens[index]!;
   }
 
@@ -44,17 +44,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder(
-        future: _loadScreen(_selectedIndex),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator()); // Loading indicator
-          } else if (snapshot.hasData) {
-            return snapshot.data as Widget;
-          } else {
-            return const Center(child: Text('Error loading tab'));
-          }
-        },
+      body: IndexedStack(
+        index: _selectedIndex, // Maintains the current screen without refreshing
+        children: [
+          _loadScreen(0), // Selling screen
+          _loadScreen(1), // Home screen
+          _loadScreen(2), // Profile screen
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
