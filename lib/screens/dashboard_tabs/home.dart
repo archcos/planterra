@@ -13,8 +13,11 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
+  bool get wantKeepAlive => true;  // Keep the state alive when switching tabs
+
   final TextEditingController _postController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
@@ -42,7 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
           .uploadBinary(fileName, bytes);
 
       if (response.error == null) {
-        // Directly use the result from getPublicUrl
         final publicUrl =
         supabaseClient.storage.from('post_images').getPublicUrl(fileName);
         return publicUrl;
@@ -56,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _postContent() async {
     if (_postController.text.isEmpty && _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter text or select an image')),
+        const SnackBar(content: Text('Please enter text or select an image')),
       );
       return;
     }
@@ -84,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Post uploaded successfully!')),
+        const SnackBar(content: Text('Post uploaded successfully!')),
       );
       _postController.clear();
       setState(() {
@@ -103,50 +105,69 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // return PopScope(
+    //   canPop: true, // Allow back navigation
+    //   onPopInvokedWithResult: (bool isUserGesture, dynamic result) {
+    //     // Scroll to the top of the list
+    //     _scrollController.animateTo(
+    //       0,
+    //       duration: const Duration(milliseconds: 300),
+    //       curve: Curves.easeInOut,
+    //     );
+    //
+    //     // Trigger a refresh
+    //     setState(() {});
+    //
+    //     // No return value needed for this callback
+    //   },
+    super.build(context);  // Don't forget to call super.build()
+
     return Scaffold(
-      appBar: AppBar(title: Text('Create Post')),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              TextField(
-                controller: _postController,
-                decoration: InputDecoration(
-                  labelText: 'What’s on your mind?',
-                  border: OutlineInputBorder(),
+        appBar: AppBar(title: const Text('Create Post')),
+        body: SingleChildScrollView(
+          controller: _scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _postController,
+                  decoration: const InputDecoration(
+                    labelText: 'What’s on your mind?',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: null,
+                  minLines: 1,
                 ),
-                maxLines: null,  // Allows dynamic resizing
-                minLines: 1,    // Minimum number of lines before expanding
-              ),
-              if (_selectedImage != null) ...[
-                SizedBox(height: 16),
-                Image.file(File(_selectedImage!.path), height: 150),
-              ],
-              SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _pickImage,
-                    icon: Icon(Icons.image),
-                    label: Text('Add Image'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _isUploading ? null : _postContent,
-                    child: _isUploading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text('Post'),
-                  ),
+                if (_selectedImage != null) ...[
+                  const SizedBox(height: 16),
+                  Image.file(File(_selectedImage!.path), height: 150),
                 ],
-              ),
-              const SizedBox(height: 16),
-              PostsList(), // Include the PostsList widget
-            ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.image),
+                      label: const Text('Add Image'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _isUploading ? null : _postContent,
+                      child: _isUploading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Post'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                PostsList(), // Include the PostsList widget
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    ")";
   }
 }
 

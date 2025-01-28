@@ -10,7 +10,9 @@ class ProfileScreen extends StatefulWidget {
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with AutomaticKeepAliveClientMixin {
+  bool get wantKeepAlive => true;  // Keep the state alive when switching tabs
+
   String? _profileName;
   String? _profilePictureUrl;
   bool _isLoading = true;
@@ -293,6 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
+    super.build(context);  // Don't forget to call super.build()
 
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
